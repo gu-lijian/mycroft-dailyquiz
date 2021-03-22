@@ -17,9 +17,9 @@
 
 from adapt.intent import IntentBuilder
 from mycroft import MycroftSkill, intent_handler
-import pandas as pd
-import git
-import shutil
+import requests
+import json
+import random
 
 
 class LoadProject(MycroftSkill):
@@ -30,12 +30,11 @@ class LoadProject(MycroftSkill):
         """
         super().__init__()
         self.learning = True
-        self.projectlist=[]
-        self.projectselect=''
-        self.basepath='~/mycroft-core/skills'
-        self.gitpath='https://github.com/twming/'
-        self.loadproject()
- 
+        self.url='https://opentdb.com/api.php?amount=1&category=27&difficulty=easy&type=boolean'
+        self.question=None
+        self.answer=''
+        self.score=0
+        self.retry=0
 
     def initialize(self):
         """ Perform any final setup needed for the skill here.
@@ -44,45 +43,40 @@ class LoadProject(MycroftSkill):
         settings will be available."""
         my_setting = self.settings.get('my_setting')
 
-    def loadproject(self):
-        self.projectlist=pd.read_csv('~/mycroft-core/skills/mycroft-loadproject/projectlist.txt',header=None,sep=',').values.tolist()
+    @intent_handler(IntentBuilder('askIntent').require('ask'))
+    def handle_ask_intent(self, message):
+        r=requests.get(self.url)
+        if r.status_code==200:
+            data=json.loads(r.text)
+            self.log.info(data)
+            self.question=data['results'][0]['question']
+            self.answer=data['results'][0]['correct_answer'].lower().strip()
+            self.speak_dialog(self.question)
+            self.retry=0
+            #self.speak_dialog(self.answer)
+        else:
+            self.speak_dialog('Please try again')
 
-    @intent_handler(IntentBuilder('showprojIntent').require('showproj'))
-    def handle_showproj_intent(self, message):
-        if self.projectlist==[]:
-            self.speak_dialog('There is no project.')
-        else:     
-            for item in self.projectlist:
-                self.log.info("Project :"+item[0]+", Path :"+item[1])
-            self.speak_dialog('Here is all the project.')
+    @intent_handler(IntentBuilder('ansIntent').require('ans'))
+    def handle_ans_intent(self, message):
+        ans=message.data.get('utterance')
+        if self.answer==ans:
+            self.speak_dialog('You are good')
+            if self.retry==0:
+                self.score=self.score+1
+        else:
+            self.speak_dialog('Sorry try again')
+        self.retry=self.retry+1
 
-    @intent_handler('selectproj.intent')
-    def handle_selectproj_intent(self, message):
-        item=message.data['number']
-        if item=='one':
-            self.projectselect=self.projectlist[0][1]
-            self.speak_dialog('project one selected')
-        elif item=='two':
-            self.projectselect=self.projectlist[1][1]
-            self.speak_dialog('project two selected')
-        elif item=='three':     
-            self.projectselect=self.projectlist[2][1]
-            self.speak_dialog('project three selected')
-        self.log.info("Project :"+self.projectselect)
+    @intent_handler(IntentBuilder('scoreIntent').require('score'))
+    def handle_score_intent(self, message):
+        self.speak_dialog('Your score is '+str(self.score))
 
-    @intent_handler(IntentBuilder('installprojIntent').require('installproj'))
-    def handle_installproj_intent(self, message):
-        if self.projectselect=='':
-            self.speak_dialog('Please select a project.')
-        else:  
-            git.Git(self.basepath).clone(self.gitpath+self.projectselect+'.git')
-            self.speak_dialog('project install complete')
-            self.log.info("project install complete")
-
-    #same as using 'uninstall <project>'
-    @intent_handler(IntentBuilder('removeprojIntent').require('removeproj'))
-    def handle_removeproj_intent(self, message):
-        shutil.rmtree('/home/train/mycroft-core/skills/'+self.projectselect)
+    @intent_handler(IntentBuilder('resetIntent').require('reset'))
+    def handle_reset_intent(self, message):
+        self.score=0
+        self.retry=0
+        self.speak_dialog('Your score is reset.')
 
     def stop(self):
         pass

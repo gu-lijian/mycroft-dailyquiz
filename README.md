@@ -1,14 +1,14 @@
-# <img src='https://raw.githack.com/FortAwesome/Font-Awesome/master/svgs/solid/smile.svg' card_color='#22a7f0' width='50' height='50' style='vertical-align:bottom'/> MyCroft Voice-Assistance Github Project Load
+# <img src='https://raw.githack.com/FortAwesome/Font-Awesome/master/svgs/solid/smile.svg' card_color='#22a7f0' width='50' height='50' style='vertical-align:bottom'/> MyCroft Daily Quiz
 Introductory Skill so that Skill Authors can see how a Mycroft Skill is put together
 
 ## About
-This is a Mycroft Project, make use of the voice assistance to load Github project to MyCroft. 
+This is a Mycroft voice skill, ask a true/false question, answer with score. 
 
 ## Examples
-* "show project" - show all projects in projectlist.txt
-* "select project <one|two|three>" - choose the project
-* "load project" - load the project to MyCroft from Github
-* "remove project" - uninstall the project
+* "test me"
+* "true/false"
+* "score"
+* "reset"
 
 ## Credits
 Mycroft AI (@MycroftAI)
@@ -17,6 +17,4 @@ Mycroft AI (@MycroftAI)
 **Starter Project**
 
 ## Tags
-#voice assistance
-#load project
-#github
+#daily quiz
